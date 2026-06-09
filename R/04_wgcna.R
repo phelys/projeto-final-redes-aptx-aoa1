@@ -22,8 +22,26 @@ if (!gsg$allOK) datExpr <- datExpr[gsg$goodSamples, gsg$goodGenes]
 # Soft-threshold (beta)
 powers <- c(1:10, seq(12, 20, 2))
 sft <- pickSoftThreshold(datExpr, powerVector = powers, networkType = "signed", verbose = 0)
-power <- if (is.null(WGCNA_POWER)) ifelse(is.na(sft$powerEstimate), 6L, sft$powerEstimate) else WGCNA_POWER
-message("Soft-threshold escolhido: beta = ", power)
+
+# Power recomendado pelo WGCNA quando o ajuste scale-free falha (comum com n pequeno).
+# Tabela oficial p/ rede SIGNED: <20 amostras -> 18; 20-30 -> 16; 30-40 -> 14; >40 -> 12.
+recommended_power <- function(n_samples) {
+  if (n_samples < 20) 18L else if (n_samples < 30) 16L else if (n_samples < 40) 14L else 12L
+}
+# Aceita a estimativa do pickSoftThreshold só se for plausível p/ signed (>=12);
+# caso contrário (NA ou beta baixo espúrio, como o beta=3 com n=12), usa a recomendação.
+power <- if (!is.null(WGCNA_POWER)) {
+  WGCNA_POWER
+} else if (!is.na(sft$powerEstimate) && sft$powerEstimate >= 12L) {
+  sft$powerEstimate
+} else {
+  recommended_power(nrow(datExpr))
+}
+message("Soft-threshold: estimado pelo fit = ",
+        ifelse(is.na(sft$powerEstimate), "NA", sft$powerEstimate),
+        " | beta usado = ", power,
+        if (is.na(sft$powerEstimate) || sft$powerEstimate < 12L)
+          " (fallback recomendado WGCNA: signed, n pequeno)" else "")
 
 png(file.path(DIR_FIGURES, "wgcna_scalefree.png"), width = 1200, height = 600, res = 130)
 par(mfrow = c(1, 2))

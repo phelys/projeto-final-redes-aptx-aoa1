@@ -40,15 +40,30 @@ if (nrow(edges) > 0) {
   cent <- cent[order(-cent$degree), ]
   write.csv(cent, file.path(DIR_TABLES, "netmed_centrality.csv"), row.names = FALSE)
 
-  # 5. Integração com expressão: quais nós são DEGs no KO?
+  # 5. Integração com expressão: quais nós são alterados no KO?
+  #    Dois critérios: (a) DEG estrito (|log2FC|>1 & padj<0.05) e
+  #    (b) significativo por padj (qualquer LFC) — os genes de reparo mudam
+  #    pouco em magnitude, mas vários são significativos (APTX, TDP1, XRCC1...).
   deg_file <- file.path(DIR_TABLES, "de_genotype_KO_vs_WT_degs.csv")
+  all_file <- file.path(DIR_TABLES, "de_genotype_KO_vs_WT_all.csv")
   if (file.exists(deg_file)) {
     degs <- read.csv(deg_file)$gene
     deg_map <- string_db$map(data.frame(gene = degs), "gene", removeUnmappedRows = TRUE)
     cent$is_DEG_KO <- cent$node %in% deg_map$STRING_id
+
+    if (file.exists(all_file)) {
+      allres <- read.csv(all_file)
+      idcol  <- if ("gene" %in% names(allres)) "gene" else names(allres)[1]
+      signif <- allres[[idcol]][!is.na(allres$padj) & allres$padj < DE_PADJ]
+      sig_map <- string_db$map(data.frame(gene = signif), "gene", removeUnmappedRows = TRUE)
+      cent$is_signif_KO <- cent$node %in% sig_map$STRING_id
+    }
     write.csv(cent, file.path(DIR_TABLES, "netmed_centrality.csv"), row.names = FALSE)
-    message("Genes-semente que também são DEGs no KO: ",
+    message("Genes-semente que são DEGs estritos (|LFC|>1 & padj<", DE_PADJ, "): ",
             sum(cent$is_seed & cent$is_DEG_KO))
+    if ("is_signif_KO" %in% names(cent))
+      message("Genes-semente significativos por padj<", DE_PADJ, " (qualquer LFC): ",
+              sum(cent$is_seed & cent$is_signif_KO))
   }
 
   # 6. Figura da sub-rede dos genes-semente

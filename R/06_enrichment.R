@@ -10,11 +10,15 @@ suppressMessages({ library(clusterProfiler); library(org.Hs.eg.db); library(Anno
 deg_file <- file.path(DIR_TABLES, "de_genotype_KO_vs_WT_degs.csv")
 stopifnot(file.exists(deg_file))
 genes <- read.csv(deg_file)$gene
+genes <- sub("\\.\\d+$", "", genes)   # remove sufixo de versão Ensembl (ENSG...->.N)
 
-# Mapear ID -> ENTREZ (ajuste keytype ao ID do dataset: SYMBOL ou ENSEMBL)
+# Mapear ID -> ENTREZ (ajuste keytype ao ID do dataset: SYMBOL ou ENSEMBL).
+# tryCatch: mapIds lança erro (não NA) quando NENHUMA chave é válida -> permite fallback.
 id_map <- function(keytype)
-  suppressWarnings(AnnotationDbi::mapIds(org.Hs.eg.db, keys = genes, keytype = keytype,
-                                         column = "ENTREZID", multiVals = "first"))
+  tryCatch(
+    suppressWarnings(AnnotationDbi::mapIds(org.Hs.eg.db, keys = genes, keytype = keytype,
+                                           column = "ENTREZID", multiVals = "first")),
+    error = function(e) setNames(rep(NA_character_, length(genes)), genes))
 entrez <- id_map("SYMBOL")
 if (mean(is.na(entrez)) > 0.8) entrez <- id_map("ENSEMBL")
 entrez <- unique(na.omit(entrez))

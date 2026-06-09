@@ -35,7 +35,7 @@ complementar da neurologia das ataxias — a AOA1 e o reparo de DNA.
 projeto-final-redes-aptx-aoa1/
 ├── R/
 │   ├── 00_setup.R            # pacotes (CRAN + Bioconductor; org.Hs.eg.db, STRINGdb)
-│   ├── config.R             # accession, organismo, desenho 2×2, genes-semente
+│   ├── config.R              # accession, organismo, desenho 2×2, genes-semente
 │   ├── 01_download.R         # baixa GSE245766 (GEOquery)
 │   ├── 02_preprocess.R       # contagens → metadados (genótipo×estímulo), filtro, vst
 │   ├── 03_diff_expression.R  # DESeq2 fatorial: efeito do KO + interação (baseline)
