@@ -1,0 +1,25 @@
+# Dados (rebaixados do GEO/STRING pelo pipeline — não versionar)
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# Saídas grandes (mantém estrutura, ignora conteúdo pesado)
+results/figures/*
+results/tables/*
+!results/figures/.gitkeep
+!results/tables/.gitkeep
+
+# R
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+*.Rproj
+renv/library/
+renv/staging/
+
+# Sistema
+.DS_Store
+Thumbs.db
+*~
